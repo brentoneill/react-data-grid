@@ -1,23 +1,31 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import joinClasses from 'classnames';
+import React from "react";
+import PropTypes from "prop-types";
+import joinClasses from "classnames";
 
-import SimpleTextEditor from './SimpleTextEditor';
-import { isFunction } from 'common/utils';
-import { isKeyPrintable, isCtrlKeyHeldDown } from 'common/utils/keyboardUtils';
-import * as zIndexes from 'common/constants/zIndexes';
-import EditorPortal from './EditorPortal';
-import ClickOutside from './ClickOutside';
+import SimpleTextEditor from "./SimpleTextEditor";
+import { isFunction } from "common/utils";
+import { isKeyPrintable, isCtrlKeyHeldDown } from "common/utils/keyboardUtils";
+import * as zIndexes from "common/constants/zIndexes";
+import EditorPortal from "./EditorPortal";
+import ClickOutside from "./ClickOutside";
 
-require('../../../themes/react-data-grid-core.css');
+require("../../../themes/react-data-grid-core.css");
 
 class EditorContainer extends React.Component {
-  static displayName = 'EditorContainer';
+  static oldRowIdx;
+  static oldColKey;
+
+  static displayName = "EditorContainer";
 
   static propTypes = {
     rowIdx: PropTypes.number,
     rowData: PropTypes.object.isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object, PropTypes.bool]).isRequired,
+    value: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.object,
+      PropTypes.bool
+    ]).isRequired,
     column: PropTypes.object.isRequired,
     width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired,
@@ -40,26 +48,31 @@ class EditorContainer extends React.Component {
     if (inputNode !== undefined) {
       this.setTextInputFocus();
       if (!this.getEditor().disableContainerStyles) {
-        inputNode.className += ' editor-main';
-        inputNode.style.height = this.props.height - 1 + 'px';
+        inputNode.className += " editor-main";
+        inputNode.style.height = this.props.height - 1 + "px";
       }
+      this.oldRowIdx = this.props.rowIdx;
+      this.oldColKey = this.props.column.key;
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.scrollLeft !== this.props.scrollLeft || prevProps.scrollTop !== this.props.scrollTop) {
+    if (
+      prevProps.scrollLeft !== this.props.scrollLeft ||
+      prevProps.scrollTop !== this.props.scrollTop
+    ) {
       this.commitCancel();
     }
   }
 
   componentWillUnmount() {
     if (!this.changeCommitted && !this.changeCanceled) {
-      this.commit({ key: 'Enter' });
+      this.commit({ key: "Enter" });
     }
   }
 
-  isKeyExplicitlyHandled = (key) => {
-    return isFunction(this['onPress' + key]);
+  isKeyExplicitlyHandled = key => {
+    return isFunction(this["onPress" + key]);
   };
 
   checkAndCall = (methodName, args) => {
@@ -68,16 +81,16 @@ class EditorContainer extends React.Component {
     }
   };
 
-  onKeyDown = (e) => {
+  onKeyDown = e => {
     if (isCtrlKeyHeldDown(e)) {
-      this.checkAndCall('onPressKeyWithCtrl', e);
+      this.checkAndCall("onPressKeyWithCtrl", e);
     } else if (this.isKeyExplicitlyHandled(e.key)) {
       // break up individual keyPress events to have their own specific callbacks
-      const callBack = 'onPress' + e.key;
+      const callBack = "onPress" + e.key;
       this.checkAndCall(callBack, e);
     } else if (isKeyPrintable(e.keyCode)) {
       e.stopPropagation();
-      this.checkAndCall('onPressChar', e);
+      this.checkAndCall("onPressChar", e);
     }
 
     // Track which keys are currently down for shift clicking etc
@@ -88,9 +101,9 @@ class EditorContainer extends React.Component {
     }
   };
 
-  setEditorRef = (editor) => {
+  setEditorRef = editor => {
     this.editor = editor;
-  }
+  };
 
   createEditor = () => {
     const editorProps = {
@@ -127,14 +140,14 @@ class EditorContainer extends React.Component {
   };
 
   onPressEnter = () => {
-    this.commit({ key: 'Enter' });
+    this.commit({ key: "Enter" });
   };
 
   onPressTab = () => {
-    this.commit({ key: 'Tab' });
+    this.commit({ key: "Tab" });
   };
 
-  onPressEscape = (e) => {
+  onPressEscape = e => {
     if (!this.editorIsSelectOpen()) {
       this.commitCancel();
     } else {
@@ -143,7 +156,7 @@ class EditorContainer extends React.Component {
     }
   };
 
-  onPressArrowDown = (e) => {
+  onPressArrowDown = e => {
     if (this.editorHasResults()) {
       // dont want to propogate as that then moves us round the grid
       e.stopPropagation();
@@ -152,7 +165,7 @@ class EditorContainer extends React.Component {
     }
   };
 
-  onPressArrowUp = (e) => {
+  onPressArrowUp = e => {
     if (this.editorHasResults()) {
       // dont want to propogate as that then moves us round the grid
       e.stopPropagation();
@@ -161,7 +174,7 @@ class EditorContainer extends React.Component {
     }
   };
 
-  onPressArrowLeft = (e) => {
+  onPressArrowLeft = e => {
     // prevent event propogation. this disables left cell navigation
     if (!this.isCaretAtBeginningOfInput()) {
       e.stopPropagation();
@@ -170,7 +183,7 @@ class EditorContainer extends React.Component {
     }
   };
 
-  onPressArrowRight = (e) => {
+  onPressArrowRight = e => {
     // prevent event propogation. this disables right cell navigation
     if (!this.isCaretAtEndOfInput()) {
       e.stopPropagation();
@@ -198,8 +211,11 @@ class EditorContainer extends React.Component {
   getRowMetaData = () => {
     // clone row data so editor cannot actually change this
     // convention based method to get corresponding Id or Name of any Name or Id property
-    if (typeof this.props.column.getRowMetaData === 'function') {
-      return this.props.column.getRowMetaData(this.props.rowData, this.props.column);
+    if (typeof this.props.column.getRowMetaData === "function") {
+      return this.props.column.getRowMetaData(
+        this.props.rowData,
+        this.props.column
+      );
     }
   };
 
@@ -213,9 +229,9 @@ class EditorContainer extends React.Component {
 
   getInitialValue = () => {
     const { firstEditorKeyPress: key, value } = this.props;
-    if (key === 'Delete' || key === 'Backspace') {
-      return '';
-    } else if (key === 'Enter') {
+    if (key === "Delete" || key === "Backspace") {
+      return "";
+    } else if (key === "Enter") {
       return value;
     }
 
@@ -224,19 +240,40 @@ class EditorContainer extends React.Component {
 
   getContainerClass = () => {
     return joinClasses({
-      'rdg-editor-container': true,
-      'has-error': this.state.isInvalid === true
+      "rdg-editor-container": true,
+      "has-error": this.state.isInvalid === true
     });
   };
 
-  commit = (args) => {
+  commit = args => {
     const { onCommit } = this.props;
     const opts = args || {};
     const updated = this.getEditor().getValue();
     if (this.isNewValueValid(updated)) {
       this.changeCommitted = true;
       const cellKey = this.props.column.key;
-      onCommit({ cellKey: cellKey, rowIdx: this.props.rowIdx, updated: updated, key: opts.key });
+      let newUpdated = {};
+
+      Object.keys(updated).forEach((key, idx) => {
+        if (key && idx === 0) {
+          newUpdated[this.oldColKey] = updated[key];
+        }
+      });
+
+      console.log(
+        "committing",
+        args,
+        this.oldRowIdx,
+        this.oldColKey,
+        newUpdated
+      );
+
+      onCommit({
+        cellKey: this.oldColKey,
+        rowIdx: this.oldRowIdx,
+        updated: newUpdated,
+        key: "Enter"
+      });
     }
   };
 
@@ -245,7 +282,7 @@ class EditorContainer extends React.Component {
     this.props.onCommitCancel();
   };
 
-  isNewValueValid = (value) => {
+  isNewValueValid = value => {
     if (isFunction(this.getEditor().validate)) {
       const isValid = this.getEditor().validate(value);
       this.setState({ isInvalid: !isValid });
@@ -263,7 +300,7 @@ class EditorContainer extends React.Component {
       input.setSelectionRange(txtLength, txtLength);
     } else if (input.createTextRange) {
       const fieldRange = input.createTextRange();
-      fieldRange.moveStart('character', txtLength);
+      fieldRange.moveStart("character", txtLength);
       fieldRange.collapse();
       fieldRange.select();
     }
@@ -271,8 +308,10 @@ class EditorContainer extends React.Component {
 
   isCaretAtBeginningOfInput = () => {
     const inputNode = this.getInputNode();
-    return inputNode.selectionStart === inputNode.selectionEnd
-      && inputNode.selectionStart === 0;
+    return (
+      inputNode.selectionStart === inputNode.selectionEnd &&
+      inputNode.selectionStart === 0
+    );
   };
 
   isCaretAtEndOfInput = () => {
@@ -280,7 +319,7 @@ class EditorContainer extends React.Component {
     return inputNode.selectionStart === inputNode.value.length;
   };
 
-  handleRightClick = (e) => {
+  handleRightClick = e => {
     e.stopPropagation();
   };
 
@@ -288,7 +327,7 @@ class EditorContainer extends React.Component {
     const keyCode = this.props.firstEditorKeyPress;
     const inputNode = this.getInputNode();
     inputNode.focus();
-    if (inputNode.tagName === 'INPUT') {
+    if (inputNode.tagName === "INPUT") {
       if (!isKeyPrintable(keyCode)) {
         inputNode.focus();
         inputNode.select();
@@ -300,13 +339,22 @@ class EditorContainer extends React.Component {
 
   renderStatusIcon = () => {
     if (this.state.isInvalid === true) {
-      return <span className="glyphicon glyphicon-remove form-control-feedback"></span>;
+      return (
+        <span className="glyphicon glyphicon-remove form-control-feedback" />
+      );
     }
   };
 
   render() {
     const { width, height, left, top } = this.props;
-    const style = { position: 'absolute', height, width, left, top, zIndex: zIndexes.EDITOR_CONTAINER };
+    const style = {
+      position: "absolute",
+      height,
+      width,
+      left,
+      top,
+      zIndex: zIndexes.EDITOR_CONTAINER
+    };
     return (
       <EditorPortal>
         <ClickOutside onClickOutside={this.commit}>
